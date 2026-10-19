@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Sports Scoreboard Arena{% endblock %}
+
+{% block content %}
+<div class="arena-container" style="max-width:480px; padding-top:4rem;">
+
+  <div class="card-glass" style="padding:2.5rem; border-color:rgba(0,255,135,0.3); box-shadow:0 15px 45px rgba(0,0,0,0.6);">
+    <div style="text-align:center; margin-bottom:2rem;">
+      <div class="brand-emblem" style="margin:0 auto 1rem; width:52px; height:52px; font-size:1.6rem;">⚡</div>
+      <h1 style="font-family:var(--font-main); font-size:1.75rem; font-weight:900;">Create Organizer Account</h1>
+      <p style="color:var(--text-sub); font-size:0.9rem; margin-top:0.35rem;">Host tournaments, manage brackets, and score live matches</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('register') }}">
+      <div style="margin-bottom:1.25rem;">
+        <label style="display:block; font-size:0.88rem; font-weight:600; color:#fff; margin-bottom:0.4rem;">Full Name *</label>
+        <input type="text" name="full_name" required class="scorer-input" placeholder="e.g. Alex Morgan">
+      </div>
+
+      <div style="margin-bottom:1.25rem;">
+        <label style="display:block; font-size:0.88rem; font-weight:600; color:#fff; margin-bottom:0.4rem;">Username *</label>
+        <input type="text" name="username" required class="scorer-input" placeholder="Choose a username">
+      </div>
+
+      <div style="margin-bottom:1.25rem;">
+        <label style="display:block; font-size:0.88rem; font-weight:600; color:#fff; margin-bottom:0.4rem;">Password *</label>
+        <input type="password" name="password" required class="scorer-input" placeholder="••••••••">
+      </div>
+
+      <div style="margin-bottom:1.75rem;">
+        <label style="display:block; font-size:0.88rem; font-weight:600; color:#fff; margin-bottom:0.4rem;">Primary Arena Role</label>
+        <select name="role" class="scorer-input" style="cursor:pointer;">
+          <option value="organizer">🏆 Tournament Organizer / Director</option>
+          <option value="scorer">🎮 Official Match Scorer / Referee</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-lime btn-lg" style="width:100%; margin-bottom:1.25rem;" id="register-submit-btn">
+        Complete Registration ➔
+      </button>
+
+      <div style="text-align:center; font-size:0.88rem; color:var(--text-sub);">
+        Already registered? 
+        <a href="{{ url_for('login') }}" style="color:var(--accent-lime); font-weight:700;">Log in here</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

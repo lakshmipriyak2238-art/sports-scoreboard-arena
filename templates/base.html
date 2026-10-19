@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Sports Scoreboard Arena - Live Multi-Sport Broadcast Hub{% endblock %}</title>
+  <meta name="description" content="High-tech sports broadcast scoring arena supporting cricket, football, basketball, badminton, and volleyball with live scorecards, tournament brackets, and standings.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/scoreboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bracket.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/scorekeeper.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- GLOBAL LIVE TICKER BAR -->
+  <div class="live-ticker-wrap">
+    <div class="ticker-label">
+      <span class="ticker-pulse"></span>
+      <span>LIVE TICKER</span>
+    </div>
+    <div class="ticker-marquee">
+      <div class="ticker-item">
+        <span class="ticker-sport">🏏 CRICKET</span>
+        <span>Bangalore Blasters 191/6 vs Mumbai Thunderbolts 178/4</span>
+        <span class="ticker-score">(18.2 ov • Mumbai need 14 from 10)</span>
+      </div>
+      <div class="ticker-item">
+        <span class="ticker-sport">⚽ FOOTBALL</span>
+        <span>Madrid Strikers 2 - 1 London Royals</span>
+        <span class="ticker-score">(76' • QF 1)</span>
+      </div>
+      <div class="ticker-item">
+        <span class="ticker-sport">🏀 BASKETBALL</span>
+        <span>Brooklyn Vipers 93 - 88 Chicago Cyclones</span>
+        <span class="ticker-score">(Q4 02:44)</span>
+      </div>
+      <div class="ticker-item">
+        <span class="ticker-sport">🏸 BADMINTON</span>
+        <span>Vikram Sen 1 - 1 Tatsuya Kato</span>
+        <span class="ticker-score">(Set 3: 18 - 16)</span>
+      </div>
+      <div class="ticker-item">
+        <span class="ticker-sport">🏐 VOLLEYBALL</span>
+        <span>Tokyo Hawks 2 - 1 Berlin Titans</span>
+        <span class="ticker-score">(Set 4: 21 - 19)</span>
+      </div>
+      <!-- Duplicate for seamless infinite loop -->
+      <div class="ticker-item">
+        <span class="ticker-sport">🏏 CRICKET</span>
+        <span>Bangalore Blasters 191/6 vs Mumbai Thunderbolts 178/4</span>
+        <span class="ticker-score">(18.2 ov • Mumbai need 14 from 10)</span>
+      </div>
+      <div class="ticker-item">
+        <span class="ticker-sport">⚽ FOOTBALL</span>
+        <span>Madrid Strikers 2 - 1 London Royals</span>
+        <span class="ticker-score">(76' • QF 1)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="arena-navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('index') }}" class="brand-logo" id="brand-logo-link">
+        <div class="brand-emblem">⚡</div>
+        <span class="brand-text">ARENA</span>
+        <span class="brand-badge">PRO v2.0</span>
+      </a>
+
+      <ul class="nav-links">
+        <li>
+          <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" id="nav-live-arena">
+            <span>🏟️</span> Live Arena
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('tournaments_list') }}" class="nav-link {% if 'tournaments' in request.endpoint and request.endpoint != 'tournament_create' %}active{% endif %}" id="nav-tournaments">
+            <span>🏆</span> Tournaments
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('leaderboards') }}" class="nav-link {% if request.endpoint == 'leaderboards' %}active{% endif %}" id="nav-leaderboards">
+            <span>📊</span> Leaderboards
+          </a>
+        </li>
+      </ul>
+
+      <div class="nav-actions">
+        {% if user.is_authenticated %}
+          <a href="{{ url_for('tournament_create') }}" class="btn btn-lime btn-sm" id="nav-create-tournament-btn">
+            <span>+</span> Create Tournament
+          </a>
+          <span style="font-size:0.85rem; color:var(--text-sub); display:flex; align-items:center; gap:6px;">
+            <span style="color:var(--accent-lime);">●</span> {{ user.full_name }}
+          </span>
+          <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm" id="nav-logout-btn">Logout</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm" id="nav-login-btn">Organizer Login</a>
+          <a href="{{ url_for('register') }}" class="btn btn-lime btn-sm" id="nav-register-btn">Sign Up</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- FLASH MESSAGES -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- MAIN PAGE CONTENT -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ARENA FOOTER -->
+  <footer class="arena-footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="brand-logo">
+          <div class="brand-emblem">⚡</div>
+          <span class="brand-text">ARENA</span>
+        </div>
+        <p>
+          Next-generation sports technology & real-time broadcast scoring arena. Designed for vibe-coding excellence and esports-grade match presentation.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Sports Supported</h4>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('index', sport='cricket') }}" class="footer-link">🏏 T20 & One Day Cricket</a></li>
+          <li><a href="{{ url_for('index', sport='football') }}" class="footer-link">⚽ Club & Cup Football</a></li>
+          <li><a href="{{ url_for('index', sport='basketball') }}" class="footer-link">🏀 Pro Basketball</a></li>
+          <li><a href="{{ url_for('index', sport='badminton') }}" class="footer-link">🏸 Badminton Singles & Doubles</a></li>
+          <li><a href="{{ url_for('index', sport='volleyball') }}" class="footer-link">🏐 Pro Spike Volleyball</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Features</h4>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('tournaments_list') }}" class="footer-link">Tournament Manager</a></li>
+          <li><a href="{{ url_for('tournaments_list') }}" class="footer-link">Knockout Bracket Tree</a></li>
+          <li><a href="{{ url_for('leaderboards') }}" class="footer-link">Points & Standings Matrix</a></li>
+          <li><a href="{{ url_for('login') }}" class="footer-link">Organizer Scorer Console</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Organizer Portal</h4>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('login') }}" class="footer-link">Referee / Scorer Login</a></li>
+          <li><a href="{{ url_for('tournament_create') }}" class="footer-link">Host a Tournament</a></li>
+          <li><span style="color:var(--text-muted); font-size:0.85rem;">Demo: admin / admin123</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div>&copy; {{ current_year }} Sports Scoreboard Arena. All rights reserved.</div>
+      <div style="display:flex; gap:1.5rem;">
+        <span style="color:var(--accent-lime);">Ultra-Low Latency Scoring</span>
+        <span>Dark Navy & Electric Lime Broadcast Edition</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ match.team1_name }} vs {{ match.team2_name }} - Live Match Center{% endblock %}
+
+{% block content %}
+<div class="arena-container">
+
+  <!-- BROADCAST SCOREBOARD HERO -->
+  <div class="match-center-hero">
+    <div class="match-center-header">
+      <div class="match-tournament-label">
+        <span>{{ sports_config[match.sport].icon }}</span>
+        <span>{{ match.tournament_name }} • {{ match.round_name }}</span>
+      </div>
+      <div class="match-venue-label">
+        🏟️ {{ match.venue or 'Arena Main Court' }} • {{ match.scheduled_at }}
+      </div>
+    </div>
+
+    <!-- MAIN BROADCAST SCORE GRID -->
+    <div class="broadcast-score-grid">
+      <!-- Team 1 Pod -->
+      <div class="team-pod team-left">
+        <div class="team-pod-meta">
+          <h3 style="color:{{ match.team1_color }};">{{ match.team1_name }}</h3>
+          <p>Captain: {{ match.team1_captain or 'Leader' }}</p>
+        </div>
+        <div class="team-pod-avatar" style="border-color:{{ match.team1_color }}; color:{{ match.team1_color }};">
+          {{ match.team1_short }}
+        </div>
+      </div>
+
+      <!-- Core Scoreboard Display -->
+      <div class="broadcast-score-core">
+        <div class="score-digits-large">
+          <span id="live-score-team1">{{ match.score_team1 }}</span>
+          <span style="color:var(--text-muted); font-size:3rem;">:</span>
+          <span id="live-score-team2">{{ match.score_team2 }}</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          {% if match.status == 'LIVE' %}
+            <span class="badge badge-live"><span class="ticker-pulse"></span> LIVE</span>
+          {% else %}
+            <span class="badge badge-completed">{{ match.status }}</span>
+          {% endif %}
+          <span class="period-clock-badge">
+            <span id="live-match-period">{{ match.current_period }}</span> • <span id="live-match-clock">{{ match.match_clock }}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Team 2 Pod -->
+      <div class="team-pod team-right">
+        <div class="team-pod-avatar" style="border-color:{{ match.team2_color }}; color:{{ match.team2_color }};">
+          {{ match.team2_short }}
+        </div>
+        <div class="team-pod-meta">
+          <h3 style="color:{{ match.team2_color }};">{{ match.team2_name }}</h3>
+          <p>Captain: {{ match.team2_captain or 'Leader' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Organizer / Scorer Link -->
+    {% if user.is_authenticated %}
+      <div style="display:flex; justify-content:center; margin-top:2rem;">
+        <a href="{{ url_for('scorekeeper', id=match.id) }}" class="btn btn-lime">
+          <span>🎮</span> Open Tactical Scorer Console
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- SPORT-SPECIFIC HUD BREAKDOWN -->
+  {% if match.sport == 'cricket' %}
+    <!-- CRICKET HUD -->
+    <div class="cricket-hud-container">
+      <div>
+        <h4 style="font-family:var(--font-main); font-size:1.05rem; font-weight:800; color:var(--accent-lime); margin-bottom:1rem; text-transform:uppercase;">
+          🏏 Current Batsmen & Strike
+        </h4>
+        <table class="batsman-table">
+          <thead>
+            <tr>
+              <th>Batsman</th>
+              <th>Runs</th>
+              <th>Balls</th>
+              <th>4s</th>
+              <th>6s</th>
+              <th>SR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set b1 = match.sport_state.batsman1 %}
+            {% set b2 = match.sport_state.batsman2 %}
+            {% if b1 %}
+            <tr>
+              <td id="cricket-b1-name" style="font-weight:700; color:#fff;">
+                {{ b1.name }} {% if b1.on_strike %}<span class="strike-star">*</span>{% endif %}
+              </td>
+              <td style="font-family:var(--font-mono); font-weight:700; color:var(--accent-lime);" id="cricket-b1-runs">{{ b1.runs }}</td>
+              <td style="font-family:var(--font-mono);" id="cricket-b1-balls">{{ b1.balls }}</td>
+              <td style="font-family:var(--font-mono);">{{ b1.fours }}</td>
+              <td style="font-family:var(--font-mono);">{{ b1.sixes }}</td>
+              <td style="font-family:var(--font-mono); color:var(--neon-cyan);">
+                {{ ((b1.runs / b1.balls * 100) | round(1)) if b1.balls > 0 else 0.0 }}
+              </td>
+            </tr>
+            {% endif %}
+            {% if b2 %}
+            <tr>
+              <td id="cricket-b2-name" style="font-weight:700; color:#fff;">
+                {{ b2.name }} {% if b2.on_strike %}<span class="strike-star">*</span>{% endif %}
+              </td>
+              <td style="font-family:var(--font-mono); font-weight:700; color:var(--accent-lime);" id="cricket-b2-runs">{{ b2.runs }}</td>
+              <td style="font-family:var(--font-mono);" id="cricket-b2-balls">{{ b2.balls }}</td>
+              <td style="font-family:var(--font-mono);">{{ b2.fours }}</td>
+              <td style="font-family:var(--font-mono);">{{ b2.sixes }}</td>
+              <td style="font-family:var(--font-mono); color:var(--neon-cyan);">
+                {{ ((b2.runs / b2.balls * 100) | round(1)) if b2.balls > 0 else 0.0 }}
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+
+        <!-- Recent Balls Strip -->
+        <div style="margin-top:1.5rem;">
+          <div style="font-size:0.8rem; font-weight:700; color:var(--text-sub); text-transform:uppercase;">Recent Deliveries:</div>
+          <div class="ball-tracker-strip" id="cricket-balls-strip">
+            {% for ball in match.sport_state.recent_balls or [] %}
+              {% if ball == '6' %}
+                <span class="ball-pill six">6</span>
+              {% elif ball == '4' %}
+                <span class="ball-pill four">4</span>
+              {% elif ball == 'W' %}
+                <span class="ball-pill wicket">W</span>
+              {% elif ball in ['Wd', 'Nb'] %}
+                <span class="ball-pill extra">{{ ball }}</span>
+              {% elif ball == '|' %}
+                <span class="ball-divider">|</span>
+              {% else %}
+                <span class="ball-pill">{{ ball }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Bowler -->
+      <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:1.25rem;">
+        <h4 style="font-family:var(--font-main); font-size:0.95rem; font-weight:700; color:var(--text-sub); text-transform:uppercase; margin-bottom:0.75rem;">
+          Current Bowler
+        </h4>
+        <div id="cricket-bowler-name" style="font-size:1.2rem; font-weight:800; color:#fff; margin-bottom:0.5rem;">
+          {{ match.sport_state.bowler.name if match.sport_state.bowler else 'Bowler' }}
+        </div>
+        <div id="cricket-bowler-figs" style="font-family:var(--font-mono); font-size:0.95rem; color:var(--accent-lime);">
+          {% if match.sport_state.bowler %}
+            {{ match.sport_state.bowler.overs }} ov • {{ match.sport_state.bowler.maidens }} m • {{ match.sport_state.bowler.runs }} r • <strong>{{ match.sport_state.bowler.wickets }} w</strong>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  {% elif match.sport == 'football' %}
+    <!-- FOOTBALL HUD -->
+    <div class="football-stats-card">
+      <h4 style="font-family:var(--font-main); font-size:1.05rem; font-weight:800; color:var(--neon-cyan); margin-bottom:1.25rem; text-transform:uppercase;">
+        ⚽ Match Statistics & Possession Meter
+      </h4>
+      <div class="possession-bar-wrap">
+        <div class="possession-labels">
+          <span style="color:{{ match.team1_color }};">{{ match.team1_short }}: <strong id="football-possession-lbl1">{{ match.sport_state.possession_team1 or 50 }}%</strong></span>
+          <span style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase;">Possession</span>
+          <span style="color:{{ match.team2_color }};"><strong id="football-possession-lbl2">{{ match.sport_state.possession_team2 or 50 }}%</strong> :{{ match.team2_short }}</span>
+        </div>
+        <div class="possession-bar-rail">
+          <div id="football-possession-t1" class="possession-fill-t1" style="width:{{ match.sport_state.possession_team1 or 50 }}%;"></div>
+          <div id="football-possession-t2" class="possession-fill-t2" style="width:{{ match.sport_state.possession_team2 or 50 }}%;"></div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+        <div>
+          <div class="stats-matrix-row">
+            <span class="stat-title">Total Shots</span>
+            <span class="stat-val">{{ match.sport_state.shots_team1 or 0 }} - {{ match.sport_state.shots_team2 or 0 }}</span>
+          </div>
+          <div class="stats-matrix-row">
+            <span class="stat-title">Shots on Target</span>
+            <span class="stat-val" style="color:var(--accent-lime);">{{ match.sport_state.shots_on_target_t1 or 0 }} - {{ match.sport_state.shots_on_target_t2 or 0 }}</span>
+          </div>
+        </div>
+        <div>
+          <div class="stats-matrix-row">
+            <span class="stat-title">Yellow Cards</span>
+            <span class="stat-val" style="color:var(--neon-orange);">{{ match.sport_state.cards_yellow_t1 or 0 }} - {{ match.sport_state.cards_yellow_t2 or 0 }}</span>
+          </div>
+          <div class="stats-matrix-row">
+            <span class="stat-title">Red Cards</span>
+            <span class="stat-val" style="color:var(--neon-red);">{{ match.sport_state.cards_red_t1 or 0 }} - {{ match.sport_state.cards_red_t2 or 0 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  {% elif match.sport == 'basketball' %}
+    <!-- BASKETBALL HUD -->
+    <div class="card-glass" style="padding:1.5rem; margin-bottom:2rem;">
+      <h4 style="font-family:var(--font-main); font-size:1.05rem; font-weight:800; color:var(--neon-orange); margin-bottom:1rem; text-transform:uppercase;">
+        🏀 Quarter-by-Quarter Breakdown
+      </h4>
+      <table class="basketball-quarter-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Team</th>
+            <th>Q1</th>
+            <th>Q2</th>
+            <th>Q3</th>
+            <th>Q4</th>
+            <th style="color:var(--accent-lime);">TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="team-cell" style="color:{{ match.team1_color }};">{{ match.team1_name }}</td>
+            <td id="bball-t1-q1">{{ match.sport_state.team1_q1 or 0 }}</td>
+            <td id="bball-t1-q2">{{ match.sport_state.team1_q2 or 0 }}</td>
+            <td id="bball-t1-q3">{{ match.sport_state.team1_q3 or 0 }}</td>
+            <td id="bball-t1-q4">{{ match.sport_state.team1_q4 or 0 }}</td>
+            <td class="total-cell">{{ match.score_team1 }}</td>
+          </tr>
+          <tr>
+            <td class="team-cell" style="color:{{ match.team2_color }};">{{ match.team2_name }}</td>
+            <td id="bball-t2-q1">{{ match.sport_state.team2_q1 or 0 }}</td>
+            <td id="bball-t2-q2">{{ match.sport_state.team2_q2 or 0 }}</td>
+            <td id="bball-t2-q3">{{ match.sport_state.team2_q3 or 0 }}</td>
+            <td id="bball-t2-q4">{{ match.sport_state.team2_q4 or 0 }}</td>
+            <td class="total-cell">{{ match.score_team2 }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  {% elif match.sport in ['badminton', 'volleyball'] %}
+    <!-- BADMINTON & VOLLEYBALL SETS HUD -->
+    <div class="card-glass" style="padding:1.5rem; margin-bottom:2rem; text-align:center;">
+      <h4 style="font-family:var(--font-main); font-size:1.05rem; font-weight:800; color:var(--neon-purple); margin-bottom:1.25rem; text-transform:uppercase;">
+        Sets Progression Breakdown
+      </h4>
+      <div class="sets-tracker-grid">
+        {% for s_num in [1, 2, 3, 4, 5] %}
+          {% set s_key = 'set' ~ s_num ~ '_score' %}
+          {% if match.sport == 'badminton' and s_num <= 3 or match.sport == 'volleyball' %}
+            <div class="set-card-box {% if match.sport_state.current_set == s_num %}active-set{% endif %}">
+              <div class="set-card-label">Set {{ s_num }}</div>
+              <div class="set-card-score" id="set{{ s_num }}-score-val">
+                {{ match.sport_state[s_key] or '0 - 0' }}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- LIVE COMMENTARY & TIMELINE FEED -->
+  <div class="commentary-feed-card">
+    <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
+      <h3 style="font-family:var(--font-main); font-size:1.35rem; font-weight:800; display:flex; align-items:center; gap:0.6rem;">
+        <span style="color:var(--accent-lime);">⚡</span> Live Match Commentary & Highlights
+      </h3>
+      <span class="badge badge-live"><span class="ticker-pulse"></span> AUTO-SYNCING</span>
+    </div>
+
+    <div class="timeline-list" id="commentary-timeline-list">
+      {% if events %}
+        {% for ev in events %}
+          <div class="timeline-item" data-event-id="{{ ev.id }}">
+            <div class="timeline-dot {% if 'GOAL' in ev.event_type or 'SIX' in ev.event_type or 'POINT_3' in ev.event_type %}highlight{% endif %}">
+              {% if 'GOAL' in ev.event_type or 'SIX' in ev.event_type or 'POINT_3' in ev.event_type %}🔥
+              {% elif 'WICKET' in ev.event_type or 'RED' in ev.event_type %}🔴
+              {% elif 'YELLOW' in ev.event_type %}🟨
+              {% else %}⚡{% endif %}
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-meta">
+                <span class="timeline-time">{{ ev.minute_or_over or 'Live' }}</span>
+                <span class="badge badge-sport">{{ ev.event_type }}</span>
+              </div>
+              <div class="timeline-desc">{{ ev.description }}</div>
+              {% if ev.score_snapshot %}
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">
+                  Score: {{ ev.score_snapshot }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:var(--text-sub); padding:1rem 0;">Match events will appear here live as they happen.</p>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/live_match.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const engine = new LiveMatchEngine({{ match.id }}, "{{ match.sport }}", "{{ match.status }}");
+  engine.start();
+});
+</script>
+{% endblock %}

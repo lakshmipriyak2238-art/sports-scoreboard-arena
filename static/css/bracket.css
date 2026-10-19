@@ -1,0 +1,187 @@
+/* ==========================================================================
+   SPORTS SCOREBOARD ARENA - KNOCKOUT BRACKET STYLES
+   ========================================================================== */
+
+.bracket-viewport {
+  overflow-x: auto;
+  padding: 2.5rem 1rem 3.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-lime) var(--bg-secondary);
+}
+
+.bracket-container {
+  display: flex;
+  gap: 3.5rem;
+  min-width: 950px;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 260px;
+}
+
+.bracket-round-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.bracket-round-title {
+  font-family: var(--font-main);
+  font-size: 1.15rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-lime);
+}
+
+.bracket-round-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.bracket-matches-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+  gap: 2.5rem;
+  position: relative;
+}
+
+/* Bracket Match Card */
+.bracket-match-node {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-fast);
+  cursor: pointer;
+  position: relative;
+}
+
+.bracket-match-node:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0, 255, 135, 0.25);
+}
+
+.bracket-match-node.live-node {
+  border-color: rgba(244, 63, 94, 0.5);
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.25);
+}
+
+.bracket-match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.bracket-team-slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 0.35rem;
+  transition: var(--transition-fast);
+}
+
+.bracket-team-slot.is-winner {
+  background: rgba(0, 255, 135, 0.1);
+  border-left: 3px solid var(--accent-lime);
+}
+
+.bracket-team-slot.is-winner .bracket-team-name {
+  color: #fff;
+  font-weight: 700;
+}
+
+.bracket-team-slot.is-winner .bracket-team-score {
+  color: var(--accent-lime);
+  font-weight: 900;
+}
+
+.bracket-team-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bracket-team-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.bracket-team-name {
+  font-family: var(--font-main);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.bracket-team-score {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Champion Trophy Showcase */
+.champion-pod-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 220px;
+  padding: 2rem 1rem;
+}
+
+.champion-trophy-icon {
+  font-size: 4rem;
+  filter: drop-shadow(0 0 25px rgba(250, 204, 21, 0.7));
+  animation: float-trophy 3s ease-in-out infinite;
+}
+
+@keyframes float-trophy {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.champion-title {
+  font-family: var(--font-main);
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #FACC15;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 1rem;
+}
+
+.champion-team-name {
+  font-family: var(--font-main);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 0.35rem;
+  text-shadow: 0 0 20px rgba(0, 255, 135, 0.5);
+}

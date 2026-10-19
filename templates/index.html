@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Arena Live Hub - Sports Scoreboard Arena{% endblock %}
+
+{% block content %}
+<div class="arena-container">
+
+  <!-- ARENA STATS COUNTER -->
+  <section class="arena-stats-grid">
+    <div class="stat-box">
+      <div>
+        <div class="stat-num">{{ stats.live_matches }}</div>
+        <div class="stat-label">Live Matches</div>
+      </div>
+      <div class="stat-icon">🔴</div>
+    </div>
+    <div class="stat-box">
+      <div>
+        <div class="stat-num">{{ stats.tournaments }}</div>
+        <div class="stat-label">Active Tournaments</div>
+      </div>
+      <div class="stat-icon">🏆</div>
+    </div>
+    <div class="stat-box">
+      <div>
+        <div class="stat-num">{{ stats.teams }}</div>
+        <div class="stat-label">Registered Teams</div>
+      </div>
+      <div class="stat-icon">🛡️</div>
+    </div>
+    <div class="stat-box">
+      <div>
+        <div class="stat-num">{{ stats.finished_matches }}</div>
+        <div class="stat-label">Completed Battles</div>
+      </div>
+      <div class="stat-icon">⚡</div>
+    </div>
+  </section>
+
+  <!-- FEATURED MATCH MARQUEE (HERO BANNER) -->
+  {% if featured_match %}
+  <section class="featured-match-hero" id="featured-hero-section">
+    <div class="featured-header">
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <span class="badge badge-live">
+          <span class="ticker-pulse"></span> {{ featured_match.status }}
+        </span>
+        <span class="badge badge-sport">{{ sports_config[featured_match.sport].icon }} {{ featured_match.sport | upper }}</span>
+        <span style="color:var(--text-sub); font-size:0.85rem; font-weight:600;">{{ featured_match.tournament_name }} • {{ featured_match.round_name }}</span>
+      </div>
+      <div class="featured-clock">
+        ⏱️ {{ featured_match.current_period }} ({{ featured_match.match_clock }})
+      </div>
+    </div>
+
+    <div class="featured-grid">
+      <!-- Team 1 -->
+      <div class="featured-team">
+        <div class="featured-team-logo" style="border-color: {{ featured_match.team1_color }}; color: {{ featured_match.team1_color }};">
+          {{ featured_match.team1_short }}
+        </div>
+        <div class="featured-team-name">{{ featured_match.team1_name }}</div>
+        {% if featured_match.sport == 'cricket' and featured_match.sport_state.team1_score %}
+          <div style="font-family:var(--font-mono); font-size:1.1rem; color:var(--text-sub);">
+            {{ featured_match.sport_state.team1_score.runs }}/{{ featured_match.sport_state.team1_score.wickets }} ({{ featured_match.sport_state.team1_score.overs }} ov)
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Center Score -->
+      <div class="featured-center-score">
+        <div class="featured-score-digits">
+          <span class="{% if featured_match.score_team1 > featured_match.score_team2 %}score-active{% endif %}">
+            {{ featured_match.score_team1 }}
+          </span>
+          <span style="color:var(--text-muted); font-size:2.5rem;">:</span>
+          <span class="{% if featured_match.score_team2 > featured_match.score_team1 %}score-active{% endif %}">
+            {{ featured_match.score_team2 }}
+          </span>
+        </div>
+        <div style="font-size:0.88rem; color:var(--text-sub); font-weight:600;">
+          🏟️ {{ featured_match.venue }}
+        </div>
+      </div>
+
+      <!-- Team 2 -->
+      <div class="featured-team">
+        <div class="featured-team-logo" style="border-color: {{ featured_match.team2_color }}; color: {{ featured_match.team2_color }};">
+          {{ featured_match.team2_short }}
+        </div>
+        <div class="featured-team-name">{{ featured_match.team2_name }}</div>
+        {% if featured_match.sport == 'cricket' and featured_match.sport_state.team2_score %}
+          <div style="font-family:var(--font-mono); font-size:1.1rem; color:var(--accent-lime); font-weight:700;">
+            {{ featured_match.sport_state.team2_score.runs }}/{{ featured_match.sport_state.team2_score.wickets }} ({{ featured_match.sport_state.team2_score.overs }}.{{ featured_match.sport_state.team2_score.balls }} ov)
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="featured-actions">
+      <a href="{{ url_for('match_detail', id=featured_match.id) }}" class="btn btn-lime btn-lg" id="featured-watch-btn">
+        <span>⚡</span> Enter Live Broadcast Center
+      </a>
+      {% if user.is_authenticated %}
+        <a href="{{ url_for('scorekeeper', id=featured_match.id) }}" class="btn btn-outline btn-lg" id="featured-scorer-btn">
+          <span>🎮</span> Open Scorer Console
+        </a>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- SPORT CATEGORY FILTER STRIP -->
+  <div class="sports-filter-strip">
+    <a href="{{ url_for('index', sport='all') }}" class="sport-filter-btn {% if active_sport == 'all' %}active{% endif %}">
+      <span>🌐</span> All Sports
+    </a>
+    {% for key, sp in sports_config.items() %}
+      <a href="{{ url_for('index', sport=key) }}" class="sport-filter-btn {% if active_sport == key %}active{% endif %}">
+        <span>{{ sp.icon }}</span> {{ sp.name }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- LIVE MATCHES SECTION -->
+  <section style="margin-bottom: 3.5rem;">
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">
+          <span class="section-title-icon">🔴</span> Live Matches Right Now
+        </h2>
+        <p class="section-subtitle">Real-time synchronized scorecards updated live from arena scorekeepers</p>
+      </div>
+      <span class="badge badge-live">{{ live_matches | length }} Active</span>
+    </div>
+
+    {% if live_matches %}
+      <div class="match-cards-grid">
+        {% for match in live_matches %}
+          <div class="scorecard-item" onclick="window.location.href='{{ url_for('match_detail', id=match.id) }}'" style="cursor:pointer;" id="match-card-{{ match.id }}">
+            <div class="scorecard-top">
+              <div class="scorecard-sport-tag">
+                <span>{{ sports_config[match.sport].icon }}</span>
+                <span>{{ match.sport }}</span>
+              </div>
+              <div class="scorecard-tournament-tag" title="{{ match.tournament_name }}">
+                {{ match.tournament_name }}
+              </div>
+            </div>
+
+            <div class="scorecard-teams">
+              <!-- Team 1 -->
+              <div class="team-score-row">
+                <div class="team-info-block">
+                  <span class="team-color-dot" style="color: {{ match.team1_color }};"></span>
+                  <span class="team-name-text">{{ match.team1_name }}</span>
+                </div>
+                <div class="team-score-value">
+                  {{ match.score_team1 }}
+                  {% if match.sport == 'cricket' and match.sport_state.team1_score %}
+                    <span class="team-score-sub">/{{ match.sport_state.team1_score.wickets }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Team 2 -->
+              <div class="team-score-row">
+                <div class="team-info-block">
+                  <span class="team-color-dot" style="color: {{ match.team2_color }};"></span>
+                  <span class="team-name-text">{{ match.team2_name }}</span>
+                </div>
+                <div class="team-score-value" style="color:var(--accent-lime);">
+                  {{ match.score_team2 }}
+                  {% if match.sport == 'cricket' and match.sport_state.team2_score %}
+                    <span class="team-score-sub">/{{ match.sport_state.team2_score.wickets }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Sport-specific highlights preview -->
+            {% if match.sport == 'cricket' and match.sport_state.batsman1 %}
+              <div style="font-size:0.82rem; color:var(--text-sub); background:rgba(255,255,255,0.02); padding:6px 10px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+                Batting: <strong>{{ match.sport_state.batsman1.name }}</strong> ({{ match.sport_state.batsman1.runs }}*)
+              </div>
+            {% elif match.sport == 'football' %}
+              <div style="font-size:0.82rem; color:var(--text-sub); display:flex; justify-content:space-between;">
+                <span>Possession: {{ match.sport_state.possession_team1 or 50 }}% - {{ match.sport_state.possession_team2 or 50 }}%</span>
+                <span>Shots: {{ match.sport_state.shots_team1 or 0 }} - {{ match.sport_state.shots_team2 or 0 }}</span>
+              </div>
+            {% endif %}
+
+            <div class="scorecard-status-bar">
+              <span class="badge badge-live"><span class="ticker-pulse"></span> {{ match.current_period }}</span>
+              <span class="scorecard-clock">⏱️ {{ match.match_clock }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card-glass" style="padding:2.5rem; text-align:center;">
+        <p style="color:var(--text-sub);">No live matches currently for this filter. Check scheduled fixtures below!</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- UPCOMING FIXTURES -->
+  <section style="margin-bottom: 3.5rem;">
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">
+          <span class="section-title-icon">📅</span> Upcoming Match Fixtures
+        </h2>
+        <p class="section-subtitle">Scheduled arena games across all sports</p>
+      </div>
+    </div>
+
+    {% if upcoming_matches %}
+      <div class="match-cards-grid">
+        {% for match in upcoming_matches %}
+          <div class="scorecard-item" onclick="window.location.href='{{ url_for('match_detail', id=match.id) }}'" style="cursor:pointer;">
+            <div class="scorecard-top">
+              <div class="scorecard-sport-tag">
+                <span>{{ sports_config[match.sport].icon }}</span>
+                <span>{{ match.sport }}</span>
+              </div>
+              <span class="badge badge-upcoming">SCHEDULED</span>
+            </div>
+
+            <div class="scorecard-teams">
+              <div class="team-score-row">
+                <div class="team-info-block">
+                  <span class="team-color-dot" style="color: {{ match.team1_color }};"></span>
+                  <span class="team-name-text">{{ match.team1_name or 'TBD' }}</span>
+                </div>
+                <span style="font-size:0.85rem; color:var(--text-muted); font-weight:700;">VS</span>
+              </div>
+              <div class="team-score-row">
+                <div class="team-info-block">
+                  <span class="team-color-dot" style="color: {{ match.team2_color }};"></span>
+                  <span class="team-name-text">{{ match.team2_name or 'TBD' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="scorecard-status-bar">
+              <span>🏟️ {{ match.venue }}</span>
+              <span style="color:var(--neon-cyan); font-family:var(--font-mono); font-weight:700;">{{ match.scheduled_at }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card-glass" style="padding:2rem; text-align:center;">
+        <p style="color:var(--text-sub);">No upcoming fixtures at this time.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- RECENT RESULTS SECTION -->
+  {% if completed_matches %}
+  <section>
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">
+          <span class="section-title-icon">🏁</span> Recent Match Results
+        </h2>
+        <p class="section-subtitle">Final scores and tournament winners</p>
+      </div>
+    </div>
+
+    <div class="match-cards-grid">
+      {% for match in completed_matches %}
+        <div class="scorecard-item" onclick="window.location.href='{{ url_for('match_detail', id=match.id) }}'" style="cursor:pointer;">
+          <div class="scorecard-top">
+            <div class="scorecard-sport-tag">
+              <span>{{ sports_config[match.sport].icon }}</span>
+              <span>{{ match.sport }}</span>
+            </div>
+            <span class="badge badge-completed">FINAL</span>
+          </div>
+
+          <div class="scorecard-teams">
+            <div class="team-score-row">
+              <div class="team-info-block">
+                <span class="team-color-dot" style="color: {{ match.team1_color }};"></span>
+                <span class="team-name-text {% if match.winner_team_id == match.team1_id %}winner{% endif %}">
+                  {{ match.team1_name }} {% if match.winner_team_id == match.team1_id %}🏆{% endif %}
+                </span>
+              </div>
+              <div class="team-score-value">{{ match.score_team1 }}</div>
+            </div>
+            <div class="team-score-row">
+              <div class="team-info-block">
+                <span class="team-color-dot" style="color: {{ match.team2_color }};"></span>
+                <span class="team-name-text {% if match.winner_team_id == match.team2_id %}winner{% endif %}">
+                  {{ match.team2_name }} {% if match.winner_team_id == match.team2_id %}🏆{% endif %}
+                </span>
+              </div>
+              <div class="team-score-value">{{ match.score_team2 }}</div>
+            </div>
+          </div>
+
+          <div class="scorecard-status-bar">
+            <span>{{ match.tournament_name }}</span>
+            <span style="color:var(--accent-lime); font-weight:700;">Won by {{ match.winner_name or 'Tied' }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

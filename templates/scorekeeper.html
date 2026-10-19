@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}Tactical Scorer Console - {{ match.team1_short }} vs {{ match.team2_short }}{% endblock %}
+
+{% block content %}
+<div class="arena-container">
+
+  <!-- CONSOLE TITLE & STATUS -->
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+    <div>
+      <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+        <span class="badge badge-sport">{{ sports_config[match.sport].icon }} {{ match.sport | upper }}</span>
+        <span class="badge badge-live"><span class="ticker-pulse"></span> SCORER TERMINAL</span>
+      </div>
+      <h1 style="font-family:var(--font-main); font-size:1.8rem; font-weight:900;">
+        {{ match.team1_name }} vs {{ match.team2_name }}
+      </h1>
+      <span style="color:var(--text-sub); font-size:0.88rem;">{{ match.tournament_name }} • {{ match.round_name }}</span>
+    </div>
+
+    <div style="display:flex; gap:0.75rem;">
+      <a href="{{ url_for('match_detail', id=match.id) }}" class="btn btn-outline btn-sm">
+        👁️ View Public Broadcast
+      </a>
+      <button onclick="terminal.undoLast()" class="btn btn-outline btn-sm" style="border-color:var(--neon-orange); color:var(--neon-orange);">
+        ↩️ Undo Last Action
+      </button>
+      {% if match.status != 'COMPLETED' %}
+        <button onclick="terminal.sendAction('END_MATCH')" class="btn btn-danger btn-sm" id="btn-conclude-match">
+          🏁 Conclude Match
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="scorekeeper-layout">
+    <!-- MAIN SCORER CONSOLE -->
+    <div class="scorer-panel-card">
+      
+      <!-- Big Scorecard Monitor -->
+      <div class="scorer-score-display">
+        <div style="display:flex; justify-content:space-around; align-items:center;">
+          <div>
+            <div style="font-size:1.1rem; font-weight:800; color:{{ match.team1_color }};">{{ match.team1_short }}</div>
+            <div style="font-size:0.85rem; color:var(--text-sub);">{{ match.team1_name }}</div>
+          </div>
+          <div class="scorer-big-score">
+            <span id="scorer-score-t1" class="score-highlight">{{ match.score_team1 }}</span>
+            <span style="color:var(--text-muted); font-size:2.5rem; margin:0 0.5rem;">:</span>
+            <span id="scorer-score-t2" class="score-highlight">{{ match.score_team2 }}</span>
+          </div>
+          <div>
+            <div style="font-size:1.1rem; font-weight:800; color:{{ match.team2_color }};">{{ match.team2_short }}</div>
+            <div style="font-size:0.85rem; color:var(--text-sub);">{{ match.team2_name }}</div>
+          </div>
+        </div>
+        <div class="scorer-sub-clock" id="scorer-clock-text">
+          {{ match.current_period }} • {{ match.match_clock }}
+        </div>
+      </div>
+
+      <!-- SPORT SPECIFIC TACTILE CONTROLS -->
+      {% if match.sport == 'cricket' %}
+        <!-- CRICKET KEYPAD -->
+        <div class="scorer-actions-section">
+          <div class="scorer-section-title">🏏 Runs Scoring Keypad</div>
+          <div class="scorer-btn-grid">
+            <button class="scorer-tactile-btn" onclick="terminal.sendAction('CRICKET_0')">
+              <span class="scorer-btn-digit">0</span>
+              <span class="scorer-btn-label">Dot Ball</span>
+            </button>
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('CRICKET_1')">
+              <span class="scorer-btn-digit">1</span>
+              <span class="scorer-btn-label">Single</span>
+            </button>
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('CRICKET_2')">
+              <span class="scorer-btn-digit">2</span>
+              <span class="scorer-btn-label">Double</span>
+            </button>
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('CRICKET_3')">
+              <span class="scorer-btn-digit">3</span>
+              <span class="scorer-btn-label">3 Runs</span>
+            </button>
+            <button class="scorer-tactile-btn btn-cyan-glow" onclick="terminal.sendAction('CRICKET_4')">
+              <span class="scorer-btn-digit" style="color:var(--neon-cyan);">4</span>
+              <span class="scorer-btn-label">Boundary Four</span>
+            </button>
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('CRICKET_6')">
+              <span class="scorer-btn-digit" style="color:var(--accent-lime);">6</span>
+              <span class="scorer-btn-label">Maximum Six</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="scorer-actions-section">
+          <div class="scorer-section-title">⚡ Extras & Wickets</div>
+          <div class="scorer-btn-grid">
+            <button class="scorer-tactile-btn" onclick="terminal.sendAction('CRICKET_WIDE')">
+              <span class="scorer-btn-digit" style="color:var(--neon-orange);">Wd</span>
+              <span class="scorer-btn-label">Wide (+1)</span>
+            </button>
+            <button class="scorer-tactile-btn" onclick="terminal.sendAction('CRICKET_NO_BALL')">
+              <span class="scorer-btn-digit" style="color:var(--neon-orange);">Nb</span>
+              <span class="scorer-btn-label">No Ball (+1)</span>
+            </button>
+            <button class="scorer-tactile-btn btn-red-glow" onclick="terminal.sendAction('CRICKET_WICKET')">
+              <span class="scorer-btn-digit" style="color:var(--neon-red);">W</span>
+              <span class="scorer-btn-label">Wicket Out!</span>
+            </button>
+            <button class="scorer-tactile-btn" onclick="terminal.sendAction('CRICKET_ROTATE_STRIKE')">
+              <span class="scorer-btn-digit">⇄</span>
+              <span class="scorer-btn-label">Rotate Strike</span>
+            </button>
+          </div>
+        </div>
+
+      {% elif match.sport == 'football' %}
+        <!-- FOOTBALL KEYPAD -->
+        <div class="scorer-actions-section">
+          <div class="scorer-section-title">⚽ Goals & Score Action</div>
+          <div class="scorer-btn-grid" style="grid-template-columns:1fr 1fr;">
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('FOOTBALL_GOAL_T1')">
+              <span class="scorer-btn-digit" style="color:{{ match.team1_color }};">+1</span>
+              <span class="scorer-btn-label">Goal {{ match.team1_short }}</span>
+            </button>
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('FOOTBALL_GOAL_T2')">
+              <span class="scorer-btn-digit" style="color:{{ match.team2_color }};">+1</span>
+              <span class="scorer-btn-label">Goal {{ match.team2_short }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="scorer-actions-section">
+          <div class="scorer-section-title">🟨 Disciplinary Cards & Halves</div>
+          <div class="scorer-btn-grid">
+            <button class="scorer-tactile-btn" onclick="terminal.sendAction('FOOTBALL_YELLOW_T1')">
+              <span class="scorer-btn-digit" style="color:var(--neon-orange);">🟨</span>
+              <span class="scorer-btn-label">Yellow Card {{ match.team1_short }}</span>
+            </button>
+            <button class="scorer-tactile-btn" onclick="terminal.sendAction('FOOTBALL_YELLOW_T2')">
+              <span class="scorer-btn-digit" style="color:var(--neon-orange);">🟨</span>
+              <span class="scorer-btn-label">Yellow Card {{ match.team2_short }}</span>
+            </button>
+            <button class="scorer-tactile-btn btn-red-glow" onclick="terminal.sendAction('FOOTBALL_RED_T1')">
+              <span class="scorer-btn-digit" style="color:var(--neon-red);">🟥</span>
+              <span class="scorer-btn-label">Red Card {{ match.team1_short }}</span>
+            </button>
+            <button class="scorer-tactile-btn btn-red-glow" onclick="terminal.sendAction('FOOTBALL_RED_T2')">
+              <span class="scorer-btn-digit" style="color:var(--neon-red);">🟥</span>
+              <span class="scorer-btn-label">Red Card {{ match.team2_short }}</span>
+            </button>
+          </div>
+          <div style="margin-top:1rem;">
+            <button class="btn btn-outline" style="width:100%;" onclick="terminal.sendAction('FOOTBALL_ADVANCE_HALF')">
+              ⏱️ Advance Match Half (1st Half ➔ Half Time ➔ 2nd Half ➔ Full Time)
+            </button>
+          </div>
+        </div>
+
+      {% elif match.sport == 'basketball' %}
+        <!-- BASKETBALL KEYPAD -->
+        <div class="scorer-actions-section">
+          <div class="scorer-section-title">🏀 {{ match.team1_name }} Points</div>
+          <div class="scorer-btn-grid">
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('BBALL_1_T1')">
+              <span class="scorer-btn-digit">+1</span>
+              <span class="scorer-btn-label">Free Throw</span>
+            </button>
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('BBALL_2_T1')">
+              <span class="scorer-btn-digit">+2</span>
+              <span class="scorer-btn-label">Field Goal</span>
+            </button>
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('BBALL_3_T1')">
+              <span class="scorer-btn-digit">+3</span>
+              <span class="scorer-btn-label">3-Pointer!</span>
+            </button>
+            <button class="scorer-tactile-btn" onclick="terminal.sendAction('BBALL_FOUL_T1')">
+              <span class="scorer-btn-digit" style="color:var(--neon-orange);">F</span>
+              <span class="scorer-btn-label">Team Foul</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="scorer-actions-section">
+          <div class="scorer-section-title">🏀 {{ match.team2_name }} Points</div>
+          <div class="scorer-btn-grid">
+            <button class="scorer-tactile-btn btn-cyan-glow" onclick="terminal.sendAction('BBALL_1_T2')">
+              <span class="scorer-btn-digit">+1</span>
+              <span class="scorer-btn-label">Free Throw</span>
+            </button>
+            <button class="scorer-tactile-btn btn-cyan-glow" onclick="terminal.sendAction('BBALL_2_T2')">
+              <span class="scorer-btn-digit">+2</span>
+              <span class="scorer-btn-label">Field Goal</span>
+            </button>
+            <button class="scorer-tactile-btn btn-cyan-glow" onclick="terminal.sendAction('BBALL_3_T2')">
+              <span class="scorer-btn-digit">+3</span>
+              <span class="scorer-btn-label">3-Pointer!</span>
+            </button>
+            <button class="scorer-tactile-btn" onclick="terminal.sendAction('BBALL_FOUL_T2')">
+              <span class="scorer-btn-digit" style="color:var(--neon-orange);">F</span>
+              <span class="scorer-btn-label">Team Foul</span>
+            </button>
+          </div>
+          <div style="margin-top:1rem;">
+            <button class="btn btn-outline" style="width:100%;" onclick="terminal.sendAction('BBALL_ADVANCE_Q')">
+              ⏱️ Advance Quarter (Q1 ➔ Q2 ➔ Q3 ➔ Q4 ➔ OT)
+            </button>
+          </div>
+        </div>
+
+      {% elif match.sport == 'badminton' %}
+        <!-- BADMINTON KEYPAD -->
+        <div class="scorer-actions-section">
+          <div class="scorer-section-title">🏸 Shuttle Point Rally Controls</div>
+          <div class="scorer-btn-grid" style="grid-template-columns:1fr 1fr;">
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('BADM_POINT_T1')">
+              <span class="scorer-btn-digit" style="color:{{ match.team1_color }};">+1</span>
+              <span class="scorer-btn-label">Point {{ match.team1_name }}</span>
+            </button>
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('BADM_POINT_T2')">
+              <span class="scorer-btn-digit" style="color:{{ match.team2_color }};">+1</span>
+              <span class="scorer-btn-label">Point {{ match.team2_name }}</span>
+            </button>
+          </div>
+        </div>
+
+      {% elif match.sport == 'volleyball' %}
+        <!-- VOLLEYBALL KEYPAD -->
+        <div class="scorer-actions-section">
+          <div class="scorer-section-title">🏐 Volleyball Point Controls</div>
+          <div class="scorer-btn-grid" style="grid-template-columns:1fr 1fr;">
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('VB_POINT_T1')">
+              <span class="scorer-btn-digit" style="color:{{ match.team1_color }};">+1</span>
+              <span class="scorer-btn-label">Point {{ match.team1_name }}</span>
+            </button>
+            <button class="scorer-tactile-btn btn-lime-glow" onclick="terminal.sendAction('VB_POINT_T2')">
+              <span class="scorer-btn-digit" style="color:{{ match.team2_color }};">+1</span>
+              <span class="scorer-btn-label">Point {{ match.team2_name }}</span>
+            </button>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Custom Event & Commentary Note -->
+      <div class="scorer-custom-input-box">
+        <div class="scorer-section-title">📝 Broadcast Commentary Note</div>
+        <div style="display:grid; grid-template-columns:1fr 2fr auto; gap:0.75rem;">
+          <input type="text" id="scorer-player-name" class="scorer-input" placeholder="Player name (optional)">
+          <input type="text" id="scorer-custom-note" class="scorer-input" placeholder="Enter custom highlight note / event description...">
+          <button class="btn btn-lime" onclick="terminal.sendAction('CUSTOM_COMMENTARY')">
+            Publish Event
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SIDE EVENT LOG FEED -->
+    <div class="card-glass" style="padding:1.5rem; height:fit-content;">
+      <h3 style="font-family:var(--font-main); font-size:1.15rem; font-weight:800; margin-bottom:1rem; color:var(--accent-lime);">
+        📜 Session Audit Log
+      </h3>
+      <div class="scorer-side-history" id="scorer-history-list">
+        {% for ev in events %}
+          <div class="history-item-mini">
+            <div class="history-item-time">{{ ev.minute_or_over or 'Live' }} • {{ ev.event_type }}</div>
+            <div style="color:#fff; margin-top:2px;">{{ ev.description }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/scorekeeper.js') }}"></script>
+<script>
+const terminal = new ScorekeeperTerminal({{ match.id }}, "{{ match.sport }}");
+</script>
+{% endblock %}

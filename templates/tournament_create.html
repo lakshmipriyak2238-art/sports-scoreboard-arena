@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Tournament - Sports Scoreboard Arena{% endblock %}
+
+{% block content %}
+<div class="arena-container" style="max-width:850px;">
+
+  <div style="margin-bottom:2rem;">
+    <h1 class="section-title">
+      <span class="section-title-icon">🏆</span> Host a New Tournament
+    </h1>
+    <p class="section-subtitle">Set up championship rules, formats, and venue credentials</p>
+  </div>
+
+  <div class="card-glass" style="padding:2.5rem;">
+    <form method="POST" action="{{ url_for('tournament_create') }}">
+      
+      <div style="margin-bottom:1.5rem;">
+        <label style="display:block; font-family:var(--font-main); font-weight:700; font-size:0.95rem; margin-bottom:0.5rem; color:#fff;">
+          Tournament Name *
+        </label>
+        <input type="text" name="name" required class="scorer-input" placeholder="e.g. Metro Pro T20 Super Series 2026">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+        <div>
+          <label style="display:block; font-family:var(--font-main); font-weight:700; font-size:0.95rem; margin-bottom:0.5rem; color:#fff;">
+            Sport Type *
+          </label>
+          <select name="sport" class="scorer-input" style="cursor:pointer;">
+            {% for key, sp in sports_config.items() %}
+              <option value="{{ key }}">{{ sp.icon }} {{ sp.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="display:block; font-family:var(--font-main); font-weight:700; font-size:0.95rem; margin-bottom:0.5rem; color:#fff;">
+            Tournament Format *
+          </label>
+          <select name="format" class="scorer-input" style="cursor:pointer;">
+            <option value="league">📊 Round-Robin League (Points Table)</option>
+            <option value="knockout">🌳 Knockout Tournament Tree (Bracket)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem;">
+        <label style="display:block; font-family:var(--font-main); font-weight:700; font-size:0.95rem; margin-bottom:0.5rem; color:#fff;">
+          Arena / Stadium Venue
+        </label>
+        <input type="text" name="venue" class="scorer-input" placeholder="e.g. National Sports Complex & Floodlights">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+        <div>
+          <label style="display:block; font-family:var(--font-main); font-weight:700; font-size:0.95rem; margin-bottom:0.5rem; color:#fff;">
+            Start Date
+          </label>
+          <input type="date" name="start_date" class="scorer-input" value="2026-10-18">
+        </div>
+
+        <div>
+          <label style="display:block; font-family:var(--font-main); font-weight:700; font-size:0.95rem; margin-bottom:0.5rem; color:#fff;">
+            Grand Final Date
+          </label>
+          <input type="date" name="end_date" class="scorer-input" value="2026-10-31">
+        </div>
+      </div>
+
+      <div style="margin-bottom:2rem;">
+        <label style="display:block; font-family:var(--font-main); font-weight:700; font-size:0.95rem; margin-bottom:0.5rem; color:#fff;">
+          Tournament Overview & Rules
+        </label>
+        <textarea name="description" rows="4" class="scorer-input" placeholder="Enter tournament format details, prizes, eligibility, and broadcast regulations..."></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:1rem;">
+        <a href="{{ url_for('tournaments_list') }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-lime btn-lg">
+          Create & Proceed to Team Registration ➔
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

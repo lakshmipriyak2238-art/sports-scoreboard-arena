@@ -1,0 +1,49 @@
+# ==============================================================================
+# Sports Scoreboard Arena - Git Ignore Rules
+# ==============================================================================
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Database Files (Local SQLite instance)
+*.db
+*.sqlite
+*.sqlite3
+arena.db
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs and Runtime Files
+*.log
+*.pid
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini

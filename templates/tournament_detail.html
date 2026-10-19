@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ tournament.name }} - Tournament Hub{% endblock %}
+
+{% block content %}
+<div class="arena-container">
+
+  <!-- TOURNAMENT HERO BANNER -->
+  <div class="card-glass" style="padding:2.25rem; margin-bottom:2rem; border-color:rgba(0,255,135,0.25); background:radial-gradient(circle at 80% 20%, rgba(0,255,135,0.08) 0%, rgba(13,21,39,0.85) 70%);">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1.5rem;">
+      <div>
+        <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.75rem;">
+          <span class="badge badge-sport" style="color:{{ sports_config[tournament.sport].color }}; border-color:{{ sports_config[tournament.sport].color }}; font-size:0.85rem;">
+            {{ sports_config[tournament.sport].icon }} {{ tournament.sport | upper }}
+          </span>
+          <span class="badge badge-upcoming">{{ tournament.format | upper }}</span>
+          {% if tournament.status == 'ONGOING' %}
+            <span class="badge badge-live"><span class="ticker-pulse"></span> ACTIVE</span>
+          {% else %}
+            <span class="badge badge-completed">{{ tournament.status }}</span>
+          {% endif %}
+        </div>
+
+        <h1 style="font-family:var(--font-main); font-size:2.2rem; font-weight:900; letter-spacing:-0.02em; line-height:1.15; margin-bottom:0.75rem;">
+          {{ tournament.name }}
+        </h1>
+
+        <p style="color:var(--text-sub); font-size:1rem; max-width:700px; line-height:1.6;">
+          {{ tournament.description or 'Premier championship tournament hosted on Sports Scoreboard Arena.' }}
+        </p>
+
+        <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:1.25rem; font-size:0.88rem; color:var(--text-sub);">
+          <span>🏟️ <strong>Venue:</strong> {{ tournament.venue or 'Main Arena' }}</span>
+          <span>📅 <strong>Dates:</strong> {{ tournament.start_date }} to {{ tournament.end_date }}</span>
+          <span>👤 <strong>Director:</strong> {{ tournament.organizer_name or 'Arena Director' }}</span>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:0.75rem; align-items:flex-end;">
+        {% if user.is_authenticated and (user.id == tournament.organizer_id or user.role == 'organizer') %}
+          <a href="{{ url_for('tournament_manage', id=tournament.id) }}" class="btn btn-lime">
+            ⚙️ Organizer Management
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS STRIP -->
+  <div style="display:flex; gap:1rem; border-bottom:1px solid var(--border-subtle); margin-bottom:2rem; overflow-x:auto;">
+    <button class="tab-btn active" onclick="switchTab('tab-fixtures', this)" id="btn-tab-fixtures" style="background:none; border:none; color:var(--accent-lime); font-family:var(--font-main); font-weight:700; font-size:1rem; padding:0.75rem 1rem; cursor:pointer; border-bottom:2px solid var(--accent-lime);">
+      📅 Matches & Fixtures ({{ matches | length }})
+    </button>
+    {% if tournament.format == 'league' or standings %}
+      <button class="tab-btn" onclick="switchTab('tab-standings', this)" id="btn-tab-standings" style="background:none; border:none; color:var(--text-sub); font-family:var(--font-main); font-weight:700; font-size:1rem; padding:0.75rem 1rem; cursor:pointer;">
+        📊 Points Table & Standings
+      </button>
+    {% endif %}
+    {% if tournament.format == 'knockout' or bracket_data %}
+      <button class="tab-btn" onclick="switchTab('tab-bracket', this)" id="btn-tab-bracket" style="background:none; border:none; color:var(--text-sub); font-family:var(--font-main); font-weight:700; font-size:1rem; padding:0.75rem 1rem; cursor:pointer;">
+        🌳 Knockout Bracket Tree
+      </button>
+    {% endif %}
+    <button class="tab-btn" onclick="switchTab('tab-teams', this)" id="btn-tab-teams" style="background:none; border:none; color:var(--text-sub); font-family:var(--font-main); font-weight:700; font-size:1rem; padding:0.75rem 1rem; cursor:pointer;">
+      🛡️ Teams & Squads ({{ teams | length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: MATCHES & FIXTURES -->
+  <div id="tab-fixtures" class="tab-pane">
+    {% if matches %}
+      <div class="match-cards-grid">
+        {% for match in matches %}
+          <div class="scorecard-item" onclick="window.location.href='{{ url_for('match_detail', id=match.id) }}'" style="cursor:pointer;">
+            <div class="scorecard-top">
+              <span class="scorecard-sport-tag">{{ match.round_name }}</span>
+              {% if match.status == 'LIVE' %}
+                <span class="badge badge-live"><span class="ticker-pulse"></span> LIVE</span>
+              {% elif match.status == 'COMPLETED' %}
+                <span class="badge badge-completed">FINAL</span>
+              {% else %}
+                <span class="badge badge-upcoming">SCHEDULED</span>
+              {% endif %}
+            </div>
+
+            <div class="scorecard-teams">
+              <div class="team-score-row">
+                <div class="team-info-block">
+                  <span class="team-color-dot" style="color:{{ match.team1_color }};"></span>
+                  <span class="team-name-text {% if match.winner_team_id == match.team1_id %}winner{% endif %}">
+                    {{ match.team1_name or 'TBD' }} {% if match.winner_team_id == match.team1_id %}🏆{% endif %}
+                  </span>
+                </div>
+                <div class="team-score-value">{{ match.score_team1 }}</div>
+              </div>
+
+              <div class="team-score-row">
+                <div class="team-info-block">
+                  <span class="team-color-dot" style="color:{{ match.team2_color }};"></span>
+                  <span class="team-name-text {% if match.winner_team_id == match.team2_id %}winner{% endif %}">
+                    {{ match.team2_name or 'TBD' }} {% if match.winner_team_id == match.team2_id %}🏆{% endif %}
+                  </span>
+                </div>
+                <div class="team-score-value">{{ match.score_team2 }}</div>
+              </div>
+            </div>
+
+            <div class="scorecard-status-bar">
+              <span>🏟️ {{ match.venue or 'Main Arena' }}</span>
+              <span class="scorecard-clock">{{ match.match_clock or match.scheduled_at }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card-glass" style="padding:3rem; text-align:center;">
+        <p style="color:var(--text-sub);">No fixtures scheduled yet for this tournament.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 2: STANDINGS / POINTS TABLE -->
+  {% if tournament.format == 'league' or standings %}
+  <div id="tab-standings" class="tab-pane" style="display:none;">
+    <div class="card-glass" style="overflow-x:auto; padding:1.5rem;">
+      <table style="width:100%; border-collapse:collapse; font-size:0.95rem; text-align:left;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border-subtle); color:var(--text-muted); font-family:var(--font-main); font-size:0.85rem; text-transform:uppercase;">
+            <th style="padding:0.75rem 1rem;">Pos</th>
+            <th style="padding:0.75rem 1rem;">Team</th>
+            <th style="padding:0.75rem 1rem; text-align:center;">P</th>
+            <th style="padding:0.75rem 1rem; text-align:center;">W</th>
+            <th style="padding:0.75rem 1rem; text-align:center;">D</th>
+            <th style="padding:0.75rem 1rem; text-align:center;">L</th>
+            <th style="padding:0.75rem 1rem; text-align:center;">Diff/NRR</th>
+            <th style="padding:0.75rem 1rem; text-align:center; color:var(--accent-lime);">PTS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in standings %}
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+              <td style="padding:1rem; font-family:var(--font-mono); font-weight:700;">
+                {% if loop.index == 1 %}<span style="color:#FACC15;">🥇 1</span>
+                {% elif loop.index == 2 %}<span style="color:#CBD5E1;">🥈 2</span>
+                {% elif loop.index == 3 %}<span style="color:#FB923C;">🥉 3</span>
+                {% else %}{{ loop.index }}{% endif %}
+              </td>
+              <td style="padding:1rem;">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                  <span class="team-color-dot" style="color:{{ row.team_color }};"></span>
+                  <span style="font-weight:700; color:#fff;">{{ row.team_name }}</span>
+                  <span style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">({{ row.team_short }})</span>
+                </div>
+              </td>
+              <td style="padding:1rem; text-align:center; font-family:var(--font-mono);">{{ row.played }}</td>
+              <td style="padding:1rem; text-align:center; font-family:var(--font-mono); color:var(--accent-lime); font-weight:700;">{{ row.won }}</td>
+              <td style="padding:1rem; text-align:center; font-family:var(--font-mono); color:var(--text-sub);">{{ row.drawn }}</td>
+              <td style="padding:1rem; text-align:center; font-family:var(--font-mono); color:var(--neon-red);">{{ row.lost }}</td>
+              <td style="padding:1rem; text-align:center; font-family:var(--font-mono);">
+                {% if row.net_run_rate_or_diff > 0 %}+{{ row.net_run_rate_or_diff }}{% else %}{{ row.net_run_rate_or_diff }}{% endif %}
+              </td>
+              <td style="padding:1rem; text-align:center; font-family:var(--font-mono); font-size:1.25rem; font-weight:900; color:var(--accent-lime);">
+                {{ row.points }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TAB 3: KNOCKOUT BRACKET TREE -->
+  {% if tournament.format == 'knockout' or bracket_data %}
+  <div id="tab-bracket" class="tab-pane" style="display:none;">
+    <div class="card-glass bracket-viewport">
+      <div class="bracket-container">
+        {% for round_obj in bracket_data %}
+          <div class="bracket-round">
+            <div class="bracket-round-header">
+              <div class="bracket-round-title">
+                {% if round_obj.round == 1 %}Quarter-Finals
+                {% elif round_obj.round == 2 %}Semi-Finals
+                {% elif round_obj.round == 3 %}Grand Final
+                {% else %}Round {{ round_obj.round }}{% endif %}
+              </div>
+              <div class="bracket-round-subtitle">{{ round_obj.matches | length }} Fixtures</div>
+            </div>
+
+            <div class="bracket-matches-col">
+              {% for m in round_obj.matches %}
+                <div class="bracket-match-node {% if m.status == 'LIVE' %}live-node{% endif %}" data-match-id="{{ m.id }}">
+                  <div class="bracket-match-header">
+                    <span>{{ m.round_name }}</span>
+                    {% if m.status == 'LIVE' %}
+                      <span class="badge badge-live" style="font-size:0.65rem;"><span class="ticker-pulse"></span> LIVE</span>
+                    {% else %}
+                      <span>{{ m.status }}</span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Team 1 Slot -->
+                  <div class="bracket-team-slot {% if m.winner_team_id and m.winner_team_id == m.team1_id %}is-winner{% endif %}" data-team-id="{{ m.team1_id }}">
+                    <div class="bracket-team-info">
+                      <div class="bracket-team-badge" style="color:{{ m.team1_color }};">
+                        {{ m.team1_short or '?' }}
+                      </div>
+                      <div class="bracket-team-name">{{ m.team1_name or 'TBD' }}</div>
+                    </div>
+                    <div class="bracket-team-score">{{ m.score_team1 }}</div>
+                  </div>
+
+                  <!-- Team 2 Slot -->
+                  <div class="bracket-team-slot {% if m.winner_team_id and m.winner_team_id == m.team2_id %}is-winner{% endif %}" data-team-id="{{ m.team2_id }}">
+                    <div class="bracket-team-info">
+                      <div class="bracket-team-badge" style="color:{{ m.team2_color }};">
+                        {{ m.team2_short or '?' }}
+                      </div>
+                      <div class="bracket-team-name">{{ m.team2_name or 'TBD' }}</div>
+                    </div>
+                    <div class="bracket-team-score">{{ m.score_team2 }}</div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+
+        <!-- Champion Trophy Pod -->
+        <div class="champion-pod-wrapper">
+          <div class="champion-trophy-icon">🏆</div>
+          <div class="champion-title">CHAMPIONSHIP TROPHY</div>
+          <div class="champion-team-name">TO BE CROWNED</div>
+          <span class="badge badge-live" style="margin-top:0.75rem;">FINAL SHOWDOWN</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- TAB 4: TEAMS & SQUADS -->
+  <div id="tab-teams" class="tab-pane" style="display:none;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
+      {% for tm in teams %}
+        <div class="card-glass" style="padding:1.5rem; border-top:4px solid {{ tm.color }};">
+          <div style="display:flex; align-items:center; gap:0.85rem; margin-bottom:1rem;">
+            <div style="width:48px; height:48px; border-radius:var(--radius-sm); background:var(--bg-secondary); border:1px solid var(--border-subtle); display:flex; align-items:center; justify-content:center; font-family:var(--font-digits); font-size:1.4rem; font-weight:700; color:{{ tm.color }};">
+              {{ tm.short_name }}
+            </div>
+            <div>
+              <h3 style="font-family:var(--font-main); font-size:1.15rem; font-weight:800; color:#fff;">{{ tm.name }}</h3>
+              <span style="font-size:0.82rem; color:var(--text-sub);">Captain: {{ tm.captain or 'Squad Leader' }}</span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-pane').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.style.color = 'var(--text-sub)';
+    b.style.borderBottom = 'none';
+  });
+  document.getElementById(tabId).style.display = 'block';
+  btn.style.color = 'var(--accent-lime)';
+  btn.style.borderBottom = '2px solid var(--accent-lime)';
+}
+</script>
+<script src="{{ url_for('static', filename='js/bracket.js') }}"></script>
+{% endblock %}
