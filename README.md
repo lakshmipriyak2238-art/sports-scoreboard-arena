@@ -5,6 +5,9 @@
 ![Theme](https://img.shields.io/badge/Theme-Dark%20Navy%20%26%20Electric%20Lime-00FF87?style=for-the-badge)
 ![Tech Stack](https://img.shields.io/badge/Stack-Flask%20%7C%20SQLite%20%7C%20Vanilla%20JS-38BDF8?style=for-the-badge)
 ![Sports](https://img.shields.io/badge/Sports-Cricket%20%7C%20Football%20%7C%20Basketball%20%7C%20Badminton%20%7C%20Volleyball-FACC15?style=for-the-badge)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-sports--scoreboard--arena.onrender.com-00FF87?style=for-the-badge&logo=render)](https://sports-scoreboard-arena.onrender.com/)
+
+🔗 **Live Website**: [https://sports-scoreboard-arena.onrender.com/](https://sports-scoreboard-arena.onrender.com/)
 
 ---
 
