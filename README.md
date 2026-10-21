@@ -55,7 +55,7 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
-Visit `http://localhost:5000` in your web browser.
+Visit `https://sports-scoreboard-arena.onrender.com/` in your web browser.
 
 ---
 
